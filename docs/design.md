@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Employee Management App aims to provide organizations with a comprehensive tool to manage their employees effectively. The application will include features such as user authentication, department management, employee profiles, performance management, leave management, payroll, time tracking, and reporting.
+The Employee Management App aims to provide organizations with a comprehensive tool to manage their employees effectively. The application will include features such as user authentication, department management, employee profiles, performance management, leave management, payroll, time tracking, and reporting.
 
 ## Requirements & Features
 
@@ -262,23 +262,41 @@ This Employee Management App aims to provide organizations with a comprehensive 
 - **Monitoring:**
   - Implement monitoring and logging using AWS CloudWatch or a similar service.
 
-## Next Steps
+## Handling App Entry Points
 
-1. **Prototype & Wireframes:**
+### Hybrid Approach
 
-   - Create wireframes for key screens like the dashboard, employee profile, and performance review.
-   - Use tools like Figma or Sketch for designing the UI.
+#### Entities
 
-2. **Detailed Requirements:**
+- **User:** Represents the person accessing the system.
+- **Employee:** Represents the role within an organization.
+- **Organization:** Represents the company or department.
 
-   - Define detailed requirements and user stories for each feature.
-   - Prioritize features based on importance and complexity.
+#### Relationships
 
-3. **MVP (Minimum Viable Product):**
+- **User** has a one-to-many relationship with **Employee**.
+- **Employee** has a many-to-one relationship with **Organization**.
 
-   - Identify the core features for the MVP.
-   - Focus on implementing the basic functionalities of user authentication, employee management, and department management.
+#### Login Process
 
-4. **Development Plan:**
-   - Create a development plan with milestones and deadlines.
-   - Assign tasks and responsibilities to team members (if working in a team).
+1. **User Registration:**
+
+   - Create a `User` record.
+   - Create an `Organization` and an `Employee` record for the user, linking the `Employee` to the `Organization`.
+
+2. **User Login:**
+
+   - Authenticate the user.
+   - Fetch all `Employee` records associated with the user.
+   - Display a list of organizations the user is associated with.
+   - Upon selecting an organization, set the current context to the chosen organization and employee.
+
+3. **Organization Switching:**
+   - Provide an option to switch organizations within the app.
+   - Allow users to switch context without logging out by fetching the relevant `Employee` and `Organization` records.
+
+#### Benefits
+
+- **Flexibility:** Users can easily switch between organizations without logging out.
+- **Simplicity:** Simplified data model compared to having fully separate entities.
+- **User Experience:** Improved user experience with a straightforward way to switch contexts.
