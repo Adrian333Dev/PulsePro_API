@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId           Int        @id @default(autoincrement()) @map("user_id")
+  email            String     @unique
+  refreshToken     String?
+  password         String
+  employeeProfiles Employee[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  HR_MANAGER
+  DEPARTMENT_MANAGER
+  EMPLOYEE
+}
+
+model Employee {
+  empId  Int          @id @default(autoincrement()) @map("employee_id")
+  role   Role         @default(EMPLOYEE)
+  userId Int          @map("user_id")
+  orgId  Int          @map("organization_id")
+  user   User         @relation(fields: [userId], references: [userId])
+  org    Organization @relation(fields: [orgId], references: [orgId])
+
+  @@map("employees")
+}
+
+model Organization {
+  orgId     Int        @id @default(autoincrement()) @map("organization_id")
+  name      String
+  employees Employee[]
+
+  @@map("organizations")
+}

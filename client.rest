@@ -1,0 +1,24 @@
+# PursePro API Test
+
+## Authentication
+
+### Sign Up
+POST http://localhost:3000/api/auth/signup
+content-type: application/json
+
+{
+  "username": "user1",
+  "password": "password"
+}
+
+### Sign In
+POST http://localhost:3000/api/auth/signin
+content-type: application/json
+
+{
+  "username": "user1",
+  "password": "password"
+}
+
+### Get My Profile
+GET http://localhost:3000/api/auth/me/user1
