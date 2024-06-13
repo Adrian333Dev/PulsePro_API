@@ -5,12 +5,12 @@ import { IsNotEmpty, IsString, MinLength, IsEmail } from 'class-validator';
 export class SignUpInput implements Prisma.UserCreateInput {
   @IsString()
   @IsNotEmpty()
-  // @IsEmail()
+  @IsEmail()
   email: string;
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(4)
+  @MinLength(6)
   password: string;
 }
 

@@ -1,5 +1,5 @@
 export enum AuthType {
-  Bearer,
-  None,
+  AccessToken,
   RefreshToken,
+  None,
 }

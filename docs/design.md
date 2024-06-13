@@ -16,7 +16,7 @@ The Employee Management App aims to provide organizations with a comprehensive t
   - Reset Password
 
 - **Authorization:**
-  - Role-based access control with roles like Admin, HR Manager, and Employee.
+  - Role-based access control with roles like Super Admin, Admin, HR Manager, Department Manager, Team Lead, and Employee.
 
 ### 2. Organizations
 
@@ -25,7 +25,7 @@ The Employee Management App aims to provide organizations with a comprehensive t
   - Create and manage organizations.
 
 - **Organization Assignment:**
-  - Assign users and departments to an organization.
+  - Assign departments to an organization.
 
 ### 3. Advanced Department Management
 
@@ -179,7 +179,7 @@ The Employee Management App aims to provide organizations with a comprehensive t
 
 - **Employees:**
 
-  - ID, Name, DepartmentID, Role, ContactInfo, etc.
+  - ID, Name, Email, DepartmentID, Role, ContactInfo, etc.
 
 - **Performance Goals:**
 
@@ -266,16 +266,21 @@ The Employee Management App aims to provide organizations with a comprehensive t
 
 ### Roles
 
-1. **Admin**
+1. **Super Admin**
 
    - **Responsibilities:**
-     - Full access to the system.
-     - Manage all organizational settings.
-     - Create and manage users, departments, and roles.
-     - Oversee system security and data integrity.
-     - Generate and view all reports.
+     - Automatically assigned upon registration.
+     - Can create organizations and assign roles to other users.
+     - Full access to all organizational actions such as creating departments, assigning employees, and deleting employees.
+     - Each organization can have only one Super Admin.
 
-2. **HR Manager**
+2. **Admin**
+
+   - **Responsibilities:**
+     - Can perform all actions within the organization, including creating departments, assigning employees, and deleting employees with roles below Admin.
+     - Multiple Admins can exist within a single organization.
+
+3. **HR Manager**
 
    - **Responsibilities:**
      - Manage employee records and profiles.
@@ -284,7 +289,7 @@ The Employee Management App aims to provide organizations with a comprehensive t
      - Oversee recruitment and onboarding processes.
      - Manage payroll and benefits.
 
-3. **Department Manager**
+4. **Department Manager**
 
    - **Responsibilities:**
      - Manage department-specific settings.
@@ -293,7 +298,7 @@ The Employee Management App aims to provide organizations with a comprehensive t
      - Set and track departmental goals.
      - Approve timesheets and leave requests.
 
-4. **Team Lead**
+5. **Team Lead**
 
    - **Responsibilities:**
      - Lead a team within a department.
@@ -302,8 +307,7 @@ The Employee Management App aims to provide organizations with a comprehensive t
      - Assist in setting and tracking team goals.
      - Report to the Department Manager.
 
-5. **Employee**
-
+6. **Employee**
    - **Responsibilities:**
      - Access personal profile and update details.
      - View assigned tasks and goals.
@@ -311,103 +315,65 @@ The Employee Management App aims to provide organizations with a comprehensive t
      - Participate in performance reviews.
      - Provide feedback to managers and peers.
 
-6. **Recruiter**
-
-   - **Responsibilities:**
-     - Manage job postings and applications.
-     - Conduct interviews and coordinate hiring processes.
-     - Handle candidate communications.
-     - Assist in onboarding new employees.
-     - Maintain recruitment records and reports.
-
-7. **Trainer**
-
-   - **Responsibilities:**
-     - Manage and conduct training programs.
-     - Track employee skill development.
-     - Maintain training schedules and materials.
-     - Evaluate training effectiveness and provide feedback.
-     - Report training progress to HR Managers.
-
-8. **Finance Manager**
-
-   - **Responsibilities:**
-     - Oversee payroll processes.
-     - Manage financial records related to employees.
-     - Generate payroll reports and handle tax calculations.
-     - Approve expense claims and reimbursements.
-     - Collaborate with HR on compensation and benefits.
-
-9. **IT Support**
-
-   - **Responsibilities:**
-     - Provide technical support to employees.
-     - Manage IT-related assets and software.
-     - Ensure system security and data protection.
-     - Assist in onboarding new employees with IT setups.
-     - Maintain and update system configurations.
-
-10. **Project Manager**
-    - **Responsibilities:**
-      - Oversee project planning and execution.
-      - Assign tasks and monitor project progress.
-      - Coordinate with team leads and department managers.
-      - Manage project budgets and resources.
-      - Report project status to stakeholders.
-
 ### Role-Based Access Control
 
 Each role will have specific permissions associated with it, defining what actions users in that role can perform. This helps in maintaining a secure and well-organized system.
 
 #### Example Role Permissions
 
-1. **Admin:**
+1. **Super Admin:**
 
    - Full access to all modules and settings.
-   - Can create, read, update, and delete any record.
+   - Can create, read, update, and delete any record within their organization.
 
-2. **HR Manager:**
+2. **Admin:**
+
+   - Full access to all modules and settings within the organization.
+   - Can create, read, update, and delete records, except for those related to the Super Admin.
+
+3. **HR Manager:**
 
    - Access to employee profiles, performance reviews, leave management, payroll, and recruitment modules.
-   - Can create, read, update, and delete employee records, but cannot manage system settings.
+   - Can create, read, update, and delete employee records.
 
-3. **Department Manager:**
+4. **Department Manager:**
 
    - Access to department-specific data and settings.
    - Can manage department employees and their tasks/goals.
 
-4. **Employee:**
+5. **Employee:**
    - Limited access to personal profile, tasks, timesheets, and leave requests.
-   - Can view and update personal records, but cannot access other employees' data.
+   - Can view and update personal records.
 
 ## Handling App Entry Points
 
-### Hybrid Approach
+### Simplified Design
 
-#### Entities
-
-- **User:** Represents the person accessing the system.
-- **Employee:** Represents the role within an organization.
-- **Organization:** Represents the company or department.
-
-#### Relationships
-
-- **User** has a one-to-many relationship with **Employee**.
-- **Employee** has a many-to-one relationship with **Organization**.
+- **Entities:**
+  - Only use `Organization` and `Employee` entities.
+  - Remove the `User` entity.
 
 ### Workflow
 
 1. **Registration:**
 
-   - When a user registers, an employee profile is automatically created for the user and linked to the specified organization.
+   - When an employee registers, they create an organization and an employee profile is automatically created for them using their provided details.
 
 2. **Login:**
 
-   - Upon login, the system retrieves the user’s associated employee profiles.
-   - The user can switch between organizations using a dropdown or similar interface to select the active organization.
+   - Employees log in using their organization-specific email and password.
+   - Upon login, the system retrieves the employee's associated organization and displays the organization's dashboard.
 
 3. **Organization Switch:**
-   - The user selects an organization to view and manage from the dropdown.
-   - The selected organization's dashboard is displayed.
+   - Employees can only be part of one organization per account.
+   - To join another organization, employees must register separately with a different email specific to that organization.
 
-This approach combines the simplicity of Option 2 with the flexibility of Option 1, providing a more user-friendly and scalable solution.
+### Advantages
+
+- **Simplifies User Management:**
+
+  - Each employee has a unique email for each organization, aligning with real-world practices.
+  - No need for additional user management layers, making the system more straightforward.
+
+- **Streamlined Notifications:**
+  - Notifications are sent to organization-specific emails, ensuring employees check the correct email for organizational updates.

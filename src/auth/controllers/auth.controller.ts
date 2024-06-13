@@ -10,7 +10,7 @@ import {
 
 import { AuthService } from '@/auth/services';
 import { ActiveUser, Auth } from '@/auth/decorators';
-import { IAccessTokenPayload, ITokens } from '@/auth/interfaces';
+import { IAccessTokenPayload, ITokens, IUserProfile } from '@/auth/interfaces';
 import { AuthType } from '@/auth/enums';
 import { SignInInput, SignUpInput } from '@/auth/dto';
 
@@ -34,7 +34,16 @@ export class AuthController {
   @Auth(AuthType.RefreshToken)
   @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@ActiveUser() user: IAccessTokenPayload): Promise<ITokens> {
+  async refreshToken(
+    @ActiveUser() user: IAccessTokenPayload,
+  ): Promise<ITokens> {
     return this.authService.refreshTokens(user);
+  }
+
+  @Auth(AuthType.AccessToken)
+  @Get('profile/:userId')
+  @HttpCode(HttpStatus.OK)
+  async profile(@Param('userId') userId: number): Promise<IUserProfile> {
+    return this.authService.getUserProfile(userId);
   }
 }
