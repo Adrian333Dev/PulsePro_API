@@ -1,98 +1,89 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'nestjs-prisma';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 
 import { SignUpInput, SignInInput } from '@/auth/dto';
 import { jwtConfig } from '@/auth/config';
-import {
-  IJWTPayload,
-  IUserOutput,
-  IGenerateTokensParams,
-  ITokens,
-} from '@/auth/interfaces';
+import { IAccessTokenPayload, ITokens, IUserProfile } from '@/auth/interfaces';
+import { throwInvalidCreds } from '@/auth/utils';
+import { JwtService } from '@nestjs/jwt';
+import { RefreshTokenIdsStorage } from './refresh-token-ids.storage';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     @Inject(jwtConfig.KEY) private config: ConfigType<typeof jwtConfig>,
+    private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
   ) {}
 
-  async signUp(data: SignUpInput): Promise<IUserOutput> {
+  async signUp(data: SignUpInput): Promise<boolean> {
     const hashedPassword = await argon2.hash(data.password);
     const user = await this.prisma.user.create({
       data: { ...data, password: hashedPassword },
     });
-
-    return { userId: user.userId, email: user.email };
+    return !!user;
   }
 
-  async signIn(data: SignInInput): Promise<IUserOutput> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-    if (!user) throw new NotFoundException('Invalid credentials');
-    const isPasswordValid = await argon2.verify(user.password, data.password);
-    if (!isPasswordValid)
-      throw new UnauthorizedException('Invalid credentials');
-    return { userId: user.userId, email: user.email };
+  async signIn({ password, email }: SignInInput): Promise<ITokens> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !(await argon2.verify(user.password, password)))
+      throwInvalidCreds();
+    return this.generateTokens({ userId: user.userId, email });
   }
 
-  async generateTokens(payload: IGenerateTokensParams): Promise<ITokens> {
+  async generateTokens({
+    userId,
+    email,
+  }: IAccessTokenPayload): Promise<ITokens> {
+    const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: this.config.secret,
-        expiresIn: this.config.accessTokenTtl,
-      }),
-      this.jwtService.signAsync(
-        { ...payload },
+      this.signToken<Partial<IAccessTokenPayload>>(
+        userId,
+        this.config.accessTokenTtl,
         {
-          secret: this.config.refreshSecret,
-          expiresIn: this.config.refreshTokenTtl,
+          email,
         },
       ),
+      this.signToken(userId, this.config.refreshTokenTtl, { refreshTokenId }),
     ]);
+    await this.refreshTokenIdsStorage.insert(userId, refreshTokenId);
     return { accessToken, refreshToken };
   }
 
-  async refreshTokens(refreshToken: string): Promise<ITokens> {
-    try {
-      const { userId, email } = await this.jwtService.verifyAsync<IJWTPayload>(
-        refreshToken,
-        { secret: this.config.refreshSecret },
-      );
-      await this.validateUser(userId);
-      return this.generateTokens({ userId, email: email });
-    } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
+  async refreshTokens(user: IAccessTokenPayload): Promise<ITokens> {
+    await this.refreshTokenIdsStorage.invalidate(user.userId);
+    return this.generateTokens(user);
   }
 
-  async validateUser(userId: number): Promise<IUserOutput> {
-    const user = await this.prisma.user.findUnique({ where: { userId } });
-    if (!user) throw new BadRequestException('User not found');
-    return { userId: user.userId, email: user.email };
-  }
-
-  async signOut(userId: number): Promise<void> {
-    await this.validateUser(userId);
-    await this.prisma.user.update({
+  async getUserProfile(userId: number): Promise<IUserProfile> {
+    return this.prisma.user.findUnique({
       where: { userId },
-      data: { refreshToken: randomUUID() },
+      include: {
+        employeeProfiles: {
+          select: {
+            empId: true,
+            org: { select: { orgId: true, name: true } },
+            role: true,
+          },
+        },
+      },
     });
   }
 
-  async getProfile(userId: number): Promise<IUserOutput> {
-    return this.validateUser(userId);
+  private async signToken<T>(userId: number, expiresIn: number, payload?: T) {
+    return await this.jwtService.signAsync(
+      { userId, ...payload } as T & IAccessTokenPayload,
+      {
+        audience: this.config.audience,
+        issuer: this.config.issuer,
+        secret: this.config.secret,
+        expiresIn,
+      },
+    );
   }
 }

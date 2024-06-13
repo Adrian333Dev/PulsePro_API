@@ -1,22 +1,40 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   Post,
-  UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 
 import { AuthService } from '@/auth/services';
-import { JwtPayload, Public } from '@/auth/decorators';
-import { IJWTPayload, IUserOutput } from '@/auth/interfaces';
-import { JwtRefreshGuard } from '@/auth/guards';
+import { ActiveUser, Auth } from '@/auth/decorators';
+import { IAccessTokenPayload, ITokens } from '@/auth/interfaces';
+import { AuthType } from '@/auth/enums';
+import { SignInInput, SignUpInput } from '@/auth/dto';
 
+@Auth(AuthType.None)
 @Controller('api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('signup')
+  @HttpCode(HttpStatus.CREATED)
+  async signup(@Body() user: SignUpInput): Promise<boolean> {
+    return this.authService.signUp(user);
+  }
+
+  @Post('signin')
+  @HttpCode(HttpStatus.OK)
+  async signin(@Body() user: SignInInput): Promise<ITokens> {
+    return this.authService.signIn(user);
+  }
+
+  @Auth(AuthType.RefreshToken)
+  @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@ActiveUser() user: IAccessTokenPayload): Promise<ITokens> {
+    return this.authService.refreshTokens(user);
+  }
 }

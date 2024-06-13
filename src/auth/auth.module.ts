@@ -1,11 +1,19 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './services';
-import { AuthController } from './controllers';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConfig } from './config';
+import { ConfigModule } from '@nestjs/config';
+
+import { AuthController } from '@/auth/controllers';
+import { jwtConfig } from '@/auth/config';
+import { RefreshTokenIdsStorage, AuthService } from '@/auth/services';
+import { AccessTokenGuard, RefreshTokenGuard } from './guards';
+
+
 @Module({
-  imports: [JwtModule.registerAsync(jwtConfig.asProvider())],
-  providers: [AuthService],
+  imports: [
+    JwtModule.registerAsync(jwtConfig.asProvider()),
+    ConfigModule.forFeature(jwtConfig),
+  ],
+  providers: [AuthService, RefreshTokenIdsStorage, AccessTokenGuard, RefreshTokenGuard],
   controllers: [AuthController],
 })
 export class AuthModule {}
