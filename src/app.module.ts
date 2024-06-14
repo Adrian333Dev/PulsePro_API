@@ -1,19 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from 'nestjs-prisma';
 
-import { AuthModule } from './auth/auth.module';
-import {
-  AccessTokenGuard,
-  AuthGuardProvider,
-  RefreshTokenGuard,
-} from './auth/guards';
-import { AppController } from './app.controller';
+import { AuthModule } from '@/auth';
+import { AppController } from '@/app.controller';
+import { PrismaModule } from '@/prisma';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule.forRoot({ isGlobal: true }),
+    PrismaModule,
     AuthModule,
   ],
   controllers: [AppController],

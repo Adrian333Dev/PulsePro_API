@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'nestjs-prisma';
+import { PrismaService } from '@/prisma';
 
 import { jwtConfig } from '@/auth/config';
 import { REQUEST_USER_KEY } from '@/auth/constants';

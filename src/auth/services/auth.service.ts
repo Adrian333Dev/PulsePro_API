@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import { PrismaService } from 'nestjs-prisma';
+import { PrismaService } from '@/prisma';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 
