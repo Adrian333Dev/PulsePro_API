@@ -19,12 +19,12 @@ export class AuthenticationGuard implements CanActivate {
     private readonly refreshTokenGuard: RefreshTokenGuard,
   ) {}
 
-  private static readonly defaultAuthType = AuthType.Bearer;
+  private static readonly defaultAuthType = AuthType.AccessToken;
   private readonly authTypeGuardMap: Record<
     AuthType,
     CanActivate | CanActivate[]
   > = {
-    [AuthType.Bearer]: this.accessTokenGuard,
+    [AuthType.AccessToken]: this.accessTokenGuard,
     [AuthType.RefreshToken]: this.refreshTokenGuard,
     [AuthType.None]: { canActivate: () => true },
   };
