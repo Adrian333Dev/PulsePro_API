@@ -5,15 +5,24 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthController } from '@/auth/controllers';
 import { jwtConfig } from '@/auth/config';
 import { RefreshTokenIdsStorage, AuthService } from '@/auth/services';
-import { AccessTokenGuard, RefreshTokenGuard } from './guards';
-
+import {
+  AccessTokenGuard,
+  AuthGuardProvider,
+  RefreshTokenGuard,
+} from './guards';
 
 @Module({
   imports: [
     JwtModule.registerAsync(jwtConfig.asProvider()),
     ConfigModule.forFeature(jwtConfig),
   ],
-  providers: [AuthService, RefreshTokenIdsStorage, AccessTokenGuard, RefreshTokenGuard],
+  providers: [
+    AuthService,
+    RefreshTokenIdsStorage,
+    AccessTokenGuard,
+    RefreshTokenGuard,
+    AuthGuardProvider,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}

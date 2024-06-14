@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Post,
 } from '@nestjs/common';
@@ -17,6 +18,8 @@ import { SignInInput, SignUpInput } from '@/auth/dto';
 @Auth(AuthType.None)
 @Controller('api/auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+  
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
@@ -32,7 +35,7 @@ export class AuthController {
   }
 
   @Auth(AuthType.RefreshToken)
-  @Post('refresh-token')
+  @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshToken(
     @ActiveUser() user: IAccessTokenPayload,
@@ -41,9 +44,9 @@ export class AuthController {
   }
 
   @Auth(AuthType.AccessToken)
-  @Get('profile/:userId')
+  @Get('me')
   @HttpCode(HttpStatus.OK)
-  async profile(@Param('userId') userId: number): Promise<IUserProfile> {
+  async me(@ActiveUser('userId') userId: number): Promise<IUserProfile> {
     return this.authService.getUserProfile(userId);
   }
 }
