@@ -17,7 +17,7 @@ import {
   ITokens,
 } from '@/auth/interfaces';
 import { AuthType } from '@/auth/enums';
-import { SignInInput, SignUpInput } from '@/auth/dto';
+import { LoginInput, RegisterInput } from '@/auth/dto';
 import { Employee } from '@prisma/client';
 
 @Auth(AuthType.None)
@@ -29,13 +29,13 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() employee: SignUpInput): Promise<boolean> {
+  async register(@Body() employee: RegisterInput): Promise<boolean> {
     return this.authService.register(employee);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async signin(@Body() employee: SignInInput): Promise<ITokens> {
+  async login(@Body() employee: LoginInput): Promise<ITokens> {
     return this.authService.login(employee);
   }
 

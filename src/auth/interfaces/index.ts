@@ -21,7 +21,7 @@ export interface IRefreshTokenPayload extends IAccessTokenPayload {
   refreshTokenId: string;
 }
 
-export interface ISignUpInput extends Omit<Prisma.EmployeeCreateInput, 'org'> {
+export interface IRegisterInput extends Omit<Prisma.EmployeeCreateInput, 'org'> {
   orgName: string;
 }
 

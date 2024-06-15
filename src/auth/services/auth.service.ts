@@ -6,7 +6,7 @@ import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 import { Employee, EmployeeRole, Prisma } from '@prisma/client';
 
-import { SignUpInput, SignInInput } from '@/auth/dto';
+import { RegisterInput, LoginInput } from '@/auth/dto';
 import { jwtConfig } from '@/auth/config';
 import {
   IAccessTokenPayload,
@@ -31,7 +31,7 @@ export class AuthService {
     orgName,
     password,
     ...data
-  }: SignUpInput): Promise<boolean> {
+  }: RegisterInput): Promise<boolean> {
     // TODO: Wrap this in a transaction
     const org = await this.prisma.organization.create({
       data: { name: orgName },
@@ -50,7 +50,7 @@ export class AuthService {
     return !!employee;
   }
 
-  async login({ password, email }: SignInInput): Promise<ITokens> {
+  async login({ password, email }: LoginInput): Promise<ITokens> {
     const employee = await this.prisma.employee.findUnique({
       where: { email },
     });
