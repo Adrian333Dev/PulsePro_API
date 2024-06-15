@@ -10,43 +10,48 @@ import {
 } from '@nestjs/common';
 
 import { AuthService } from '@/auth/services';
-import { ActiveUser, Auth } from '@/auth/decorators';
-import { IAccessTokenPayload, ITokens, IUserProfile } from '@/auth/interfaces';
+import { ActiveEmployee, Auth } from '@/auth/decorators';
+import {
+  IAccessTokenPayload,
+  IEmployeeProfile,
+  ITokens,
+} from '@/auth/interfaces';
 import { AuthType } from '@/auth/enums';
 import { SignInInput, SignUpInput } from '@/auth/dto';
+import { Employee } from '@prisma/client';
 
 @Auth(AuthType.None)
 @Controller('api/auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  
+
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signup')
+  @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async signup(@Body() user: SignUpInput): Promise<boolean> {
-    return this.authService.signUp(user);
+  async register(@Body() employee: SignUpInput): Promise<boolean> {
+    return this.authService.register(employee);
   }
 
-  @Post('signin')
+  @Post('login')
   @HttpCode(HttpStatus.OK)
-  async signin(@Body() user: SignInInput): Promise<ITokens> {
-    return this.authService.signIn(user);
+  async signin(@Body() employee: SignInInput): Promise<ITokens> {
+    return this.authService.login(employee);
   }
 
   @Auth(AuthType.RefreshToken)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(
-    @ActiveUser() user: IAccessTokenPayload,
-  ): Promise<ITokens> {
-    return this.authService.refreshTokens(user);
+  async refreshToken(@ActiveEmployee() employee: Employee): Promise<ITokens> {
+    return this.authService.refreshTokens(employee);
   }
 
   @Auth(AuthType.AccessToken)
   @Get('me')
   @HttpCode(HttpStatus.OK)
-  async me(@ActiveUser('userId') userId: number): Promise<IUserProfile> {
-    return this.authService.getUserProfile(userId);
+  async me(
+    @ActiveEmployee('sub') empId: number,
+  ): Promise<IEmployeeProfile> {
+    return this.authService.getEmployeeProfile(empId);
   }
 }

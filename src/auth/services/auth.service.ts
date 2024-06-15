@@ -1,15 +1,21 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@/prisma';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
+import { Employee, EmployeeRole, Prisma } from '@prisma/client';
 
 import { SignUpInput, SignInInput } from '@/auth/dto';
 import { jwtConfig } from '@/auth/config';
-import { IAccessTokenPayload, ITokens, IUserProfile } from '@/auth/interfaces';
+import {
+  IAccessTokenPayload,
+  ITokens,
+  IEmployeeProfile,
+} from '@/auth/interfaces';
 import { throwInvalidCreds } from '@/auth/utils';
-import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenIdsStorage } from './refresh-token-ids.storage';
+import { employeeProfileQuery } from '@/auth/constants';
 
 @Injectable()
 export class AuthService {
@@ -21,63 +27,67 @@ export class AuthService {
     private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
   ) {}
 
-  async signUp(data: SignUpInput): Promise<boolean> {
-    const hashedPassword = await argon2.hash(data.password);
-    const user = await this.prisma.user.create({
-      data: { ...data, password: hashedPassword },
+  async register({
+    orgName,
+    password,
+    ...data
+  }: SignUpInput): Promise<boolean> {
+    // TODO: Wrap this in a transaction
+    const org = await this.prisma.organization.create({
+      data: { name: orgName },
     });
-    return !!user;
+
+    const hashedPassword = await argon2.hash(password);
+    const employee = await this.prisma.employee.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+        orgId: org.orgId,
+        role: EmployeeRole.ADMIN,
+      },
+    });
+
+    return !!employee;
   }
 
-  async signIn({ password, email }: SignInInput): Promise<ITokens> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user || !(await argon2.verify(user.password, password)))
+  async login({ password, email }: SignInInput): Promise<ITokens> {
+    const employee = await this.prisma.employee.findUnique({
+      where: { email },
+    });
+    if (!employee || !(await argon2.verify(employee.password, password)))
       throwInvalidCreds();
-    return this.generateTokens({ userId: user.userId, email });
+    return this.generateTokens(employee);
   }
 
-  async generateTokens({
-    userId,
-    email,
-  }: IAccessTokenPayload): Promise<ITokens> {
+  async generateTokens({ empId, email, role }: Employee): Promise<ITokens> {
     const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken<Partial<IAccessTokenPayload>>(
-        userId,
+        empId,
         this.config.accessTokenTtl,
-        {
-          email,
-        },
+        { email, role },
       ),
-      this.signToken(userId, this.config.refreshTokenTtl, { refreshTokenId }),
+      this.signToken(empId, this.config.refreshTokenTtl, { refreshTokenId }),
     ]);
-    await this.refreshTokenIdsStorage.insert(userId, refreshTokenId);
+    await this.refreshTokenIdsStorage.insert(empId, refreshTokenId);
     return { accessToken, refreshToken };
   }
 
-  async refreshTokens(user: IAccessTokenPayload): Promise<ITokens> {
-    await this.refreshTokenIdsStorage.invalidate(user.userId);
-    return this.generateTokens(user);
+  async refreshTokens(employee: Employee): Promise<ITokens> {
+    await this.refreshTokenIdsStorage.invalidate(employee.empId);
+    return this.generateTokens(employee);
   }
 
-  async getUserProfile(userId: number): Promise<IUserProfile> {
-    return this.prisma.user.findUnique({
-      where: { userId },
-      include: {
-        employeeProfiles: {
-          select: {
-            empId: true,
-            org: { select: { orgId: true, name: true } },
-            role: true,
-          },
-        },
-      },
+  async getEmployeeProfile(empId: number): Promise<IEmployeeProfile> {
+    return this.prisma.employee.findUnique({
+      where: { empId },
+      select: employeeProfileQuery,
     });
   }
 
-  private async signToken<T>(userId: number, expiresIn: number, payload?: T) {
+  private async signToken<T>(empId: number, expiresIn: number, payload?: T) {
     return await this.jwtService.signAsync(
-      { userId, ...payload } as T & IAccessTokenPayload,
+      { sub: empId, ...payload } as IAccessTokenPayload & T,
       {
         audience: this.config.audience,
         issuer: this.config.issuer,

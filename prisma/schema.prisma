@@ -13,16 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  userId           Int        @id @default(autoincrement()) @map("user_id")
-  email            String     @unique
-  password         String
-  employeeProfiles Employee[]
-
-  @@map("users")
-}
-
-enum Role {
+enum EmployeeRole {
   ADMIN
   HR_MANAGER
   DEPARTMENT_MANAGER
@@ -30,12 +21,13 @@ enum Role {
 }
 
 model Employee {
-  empId  Int          @id @default(autoincrement()) @map("employee_id")
-  role   Role         @default(EMPLOYEE)
-  userId Int          @map("user_id")
-  orgId  Int          @map("organization_id")
-  user   User         @relation(fields: [userId], references: [userId])
-  org    Organization @relation(fields: [orgId], references: [orgId])
+  empId    Int          @id @default(autoincrement()) @map("employee_id")
+  name     String
+  email    String       @unique
+  password String       @map("password_hash")
+  role     EmployeeRole @default(EMPLOYEE)
+  orgId    Int          @map("organization_id")
+  org      Organization @relation(fields: [orgId], references: [orgId])
 
   @@map("employees")
 }

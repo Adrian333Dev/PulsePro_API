@@ -1,8 +1,14 @@
 import { PickType } from '@nestjs/mapped-types';
-import { User, Employee, Prisma } from '@prisma/client';
+import { Employee, Prisma } from '@prisma/client';
 import { IsNotEmpty, IsString, MinLength, IsEmail } from 'class-validator';
+import { ISignUpInput } from '@/auth/interfaces';
 
-export class SignUpInput implements Prisma.UserCreateInput {
+export class SignUpInput implements ISignUpInput {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  name: string;
+
   @IsString()
   @IsNotEmpty()
   @IsEmail()
@@ -12,6 +18,10 @@ export class SignUpInput implements Prisma.UserCreateInput {
   @IsNotEmpty()
   @MinLength(6)
   password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  orgName: string;
 }
 
 export class SignInInput extends PickType(SignUpInput, ['email', 'password']) {}

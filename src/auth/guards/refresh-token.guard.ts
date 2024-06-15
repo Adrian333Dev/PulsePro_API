@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@/prisma';
 
 import { jwtConfig } from '@/auth/config';
-import { REQUEST_USER_KEY } from '@/auth/constants';
+import { REQUEST_EMPLOYEE_KEY } from '@/auth/constants';
 import { extractTokenFromHeader, throwInvalidToken } from '@/auth/utils';
 import { RefreshTokenIdsStorage } from '@/auth/services';
 import { IRefreshTokenPayload } from '@/auth/interfaces';
@@ -30,14 +30,20 @@ export class RefreshTokenGuard implements CanActivate {
     const token = extractTokenFromHeader(request);
     if (!token) throw new UnauthorizedException('Refresh token not provided');
     try {
-      const { userId, refreshTokenId } = await this.jwtService.verifyAsync<IRefreshTokenPayload>(
-        token,
-        this.config,
+      const { sub, refreshTokenId } =
+        await this.jwtService.verifyAsync<IRefreshTokenPayload>(
+          token,
+          this.config,
+        );
+      const employee = await this.prisma.employee.findUniqueOrThrow({
+        where: { empId: sub },
+      });
+      const isValid = await this.refreshTokenIdsStorage.validate(
+        employee.empId,
+        refreshTokenId,
       );
-      const user = await this.prisma.user.findUniqueOrThrow({ where: { userId } });
-      const isValid = await this.refreshTokenIdsStorage.validate(userId, refreshTokenId);
       if (isValid) throwInvalidToken('Refresh');
-      request[REQUEST_USER_KEY] = user;
+      request[REQUEST_EMPLOYEE_KEY] = employee;
       return true;
     } catch {
       throwInvalidToken('Refresh');

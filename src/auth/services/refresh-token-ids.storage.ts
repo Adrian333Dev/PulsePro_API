@@ -23,21 +23,21 @@ export class RefreshTokenIdsStorage
     return this.redisClient.quit();
   }
 
-  async insert(userId: number, tokenId: string): Promise<void> {
-    await this.redisClient.set(this.getKey(userId), tokenId);
+  async insert(employeeId: number, tokenId: string): Promise<void> {
+    await this.redisClient.set(this.getKey(employeeId), tokenId);
   }
 
-  async validate(userId: number, tokenId: string): Promise<boolean> {
-    const storedId = await this.redisClient.get(this.getKey(userId));
+  async validate(employeeId: number, tokenId: string): Promise<boolean> {
+    const storedId = await this.redisClient.get(this.getKey(employeeId));
     if (storedId !== tokenId) throwInvalidToken('Refresh');
     return storedId === tokenId;
   }
 
-  async invalidate(userId: number): Promise<void> {
-    await this.redisClient.del(this.getKey(userId));
+  async invalidate(employeeId: number): Promise<void> {
+    await this.redisClient.del(this.getKey(employeeId));
   }
 
-  private getKey(userId: number): string {
-    return `user-${userId}`;
+  private getKey(employeeId: number): string {
+    return `employee-${employeeId}`;
   }
 }

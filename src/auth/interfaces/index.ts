@@ -1,32 +1,16 @@
-import { User, Organization, Employee, Prisma } from '@prisma/client';
-
-// export interface IEmployeeProfile
-//   extends Pick<Employee, 'empId' | 'orgId' | 'role'> {}
-
-// export interface IUserProfile
-//   extends Omit<
-//     Prisma.UserGetPayload<{
-//       include: {
-//         employeeProfiles: { select: { empId: true; orgId: true; role: true } };
-//       };
-//     }>,
-//     'password'
-//   > {}
-
-// export interface IUserWithEmployeeProfiles
-//   extends Pick<
-//     Prisma.UserGetPayload<{
-//       include: {
-//         employeeProfiles: { select: { empId: true; orgId: true; role: true } };
-//       };
-//     }>,
-//     'userId' | 'email' | 'employeeProfiles'
-//   > {}
+import { Organization, Employee, Prisma, EmployeeRole } from '@prisma/client';
 
 export interface IAccessTokenPayload {
-  userId: number;
+  sub: number;
   email: string;
+  role: EmployeeRole;
 }
+
+export interface IEmployeeProfile
+  extends Omit<
+    Prisma.EmployeeGetPayload<{ include: { org: true } }>,
+    'password'
+  > {}
 
 export interface ITokens {
   accessToken: string;
@@ -37,19 +21,8 @@ export interface IRefreshTokenPayload extends IAccessTokenPayload {
   refreshTokenId: string;
 }
 
+export interface ISignUpInput extends Omit<Prisma.EmployeeCreateInput, 'org'> {
+  orgName: string;
+}
 
-export interface IUserProfile
-  extends Omit<
-    Prisma.UserGetPayload<{
-      include: {
-        employeeProfiles: {
-          select: {
-            empId: true;
-            org: { select: { orgId: true; name: true } };
-            role: true;
-          };
-        };
-      };
-    }>,
-    'password'
-  > {}
+// employee: empId,
