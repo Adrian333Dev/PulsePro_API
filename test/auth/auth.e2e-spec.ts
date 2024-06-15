@@ -6,6 +6,7 @@ import * as request from 'supertest';
 import { AuthModule } from '@/auth';
 import { PrismaModule, PrismaService } from '@/prisma';
 import { validationPipeOptions } from '@/main';
+import { APP_PIPE } from '@nestjs/core';
 
 describe('[Feature] Auth - /auth', () => {
   let app: INestApplication;
@@ -24,9 +25,9 @@ describe('[Feature] Auth - /auth', () => {
     await app.init();
   });
 
-  it('POST /api/auth/signup - invalid credentials', async () => {
-    return request(app.getHttpServer())
-      .post('/api/auth/signup')
+  it('POST /api/auth/register - invalid credentials', async () => {
+    return await request(app.getHttpServer())
+      .post('/api/auth/register')
       .send({ email: 'invalid', password: 'short' })
       .expect(400);
   });

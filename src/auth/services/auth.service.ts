@@ -24,7 +24,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     @Inject(jwtConfig.KEY) private config: ConfigType<typeof jwtConfig>,
-    private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
+    // private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
   ) {}
 
   async register({
@@ -69,12 +69,12 @@ export class AuthService {
       ),
       this.signToken(empId, this.config.refreshTokenTtl, { refreshTokenId }),
     ]);
-    await this.refreshTokenIdsStorage.insert(empId, refreshTokenId);
+    // await this.refreshTokenIdsStorage.insert(empId, refreshTokenId);
     return { accessToken, refreshToken };
   }
 
   async refreshTokens(employee: Employee): Promise<ITokens> {
-    await this.refreshTokenIdsStorage.invalidate(employee.empId);
+    // await this.refreshTokenIdsStorage.invalidate(employee.empId);
     return this.generateTokens(employee);
   }
 

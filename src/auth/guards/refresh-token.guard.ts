@@ -22,7 +22,7 @@ export class RefreshTokenGuard implements CanActivate {
     @Inject(jwtConfig.KEY)
     private readonly config: ConfigType<typeof jwtConfig>,
     private readonly prisma: PrismaService,
-    private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
+    // private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -38,10 +38,11 @@ export class RefreshTokenGuard implements CanActivate {
       const employee = await this.prisma.employee.findUniqueOrThrow({
         where: { empId: sub },
       });
-      const isValid = await this.refreshTokenIdsStorage.validate(
-        employee.empId,
-        refreshTokenId,
-      );
+      // const isValid = await this.refreshTokenIdsStorage.validate(
+      //   employee.empId,
+      //   refreshTokenId,
+      // );
+      const isValid = true;
       if (isValid) throwInvalidToken('Refresh');
       request[REQUEST_EMPLOYEE_KEY] = employee;
       return true;
