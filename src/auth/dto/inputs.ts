@@ -1,9 +1,9 @@
 import { PickType } from '@nestjs/mapped-types';
-import { Employee, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { IsNotEmpty, IsString, MinLength, IsEmail } from 'class-validator';
-import { IRegisterInput } from '@/auth/interfaces';
+import { ISignUpInput } from '@/auth/interfaces';
 
-export class RegisterInput implements IRegisterInput {
+export class SignUpInput implements ISignUpInput {
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
@@ -25,4 +25,4 @@ export class RegisterInput implements IRegisterInput {
   orgName: string;
 }
 
-export class LoginInput extends PickType(RegisterInput, ['email', 'password']) {}
+export class SignInInput extends PickType(SignUpInput, ['email', 'password']) {}

@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { AuthController } from '@/auth/controllers';
 import { jwtConfig } from '@/auth/config';
-import { RefreshTokenIdsStorage, AuthService } from '@/auth/services';
+import { AuthService } from '@/auth/services';
 import {
   AccessTokenGuard,
   AuthGuardProvider,
@@ -18,7 +18,6 @@ import {
   ],
   providers: [
     AuthService,
-    // RefreshTokenIdsStorage,
     AccessTokenGuard,
     RefreshTokenGuard,
     AuthGuardProvider,

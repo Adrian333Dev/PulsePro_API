@@ -7,6 +7,7 @@ import { PrismaClientExceptionFilter } from 'nestjs-prisma';
 
 import { AuthModule } from '@/auth';
 import { PrismaModule, PrismaService } from '@/prisma';
+import { AUTH_ROUTES, AUTH_URL } from '@/auth/constants';
 
 /**
  * Auth Endpoints:
@@ -31,7 +32,7 @@ const mockUser1 = {
   orgName: 'Test Org',
 };
 
-describe('[Feature] Auth - api/auth', () => {
+describe(`[Feature] Auth - ${AUTH_URL}`, () => {
   let app: INestApplication;
   let prismaService: PrismaService;
   let module: TestingModule;
@@ -61,13 +62,13 @@ describe('[Feature] Auth - api/auth', () => {
     await app.init();
   });
 
-  describe('POST /register', () => {
+  describe(`POST ${AUTH_ROUTES.SIGN_UP}`, () => {
     const validRegisterInput = { ...mockUser1 };
 
-    const ENDPOINT = '/api/auth/register';
+    const ENDPOINT = `${AUTH_URL}/${AUTH_ROUTES.SIGN_UP}`;
     it('should fail with invalid email', async () => {
       return await request(app.getHttpServer())
-        .post('/api/auth/register')
+        .post(ENDPOINT)
         .send({ ...validRegisterInput, email: 'invalid-email' })
         .expect(HttpStatus.BAD_REQUEST);
     });
@@ -101,13 +102,13 @@ describe('[Feature] Auth - api/auth', () => {
     });
   });
 
-  describe('POST /login', () => {
+  describe(`POST ${AUTH_ROUTES.SIGN_IN}`, () => {
     const validLoginInput = {
       email: mockUser1.email,
       password: mockUser1.password,
     };
 
-    const ENDPOINT = '/api/auth/login';
+    const ENDPOINT = `${AUTH_URL}/${AUTH_ROUTES.SIGN_IN}`;
     it('should fail with invalid email', async () => {
       return await request(app.getHttpServer())
         .post(ENDPOINT)
@@ -152,10 +153,36 @@ describe('[Feature] Auth - api/auth', () => {
     });
   });
 
+  // Test /me endpoint withouth access token, then with invalid access token, then with valid access token
+  describe(`GET ${AUTH_ROUTES.ME}`, () => {
+    const ENDPOINT = `${AUTH_URL}/${AUTH_ROUTES.ME}`;
+
+    it('should fail without access token', async () => {
+      return await request(app.getHttpServer())
+        .get(ENDPOINT)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should fail with invalid access token', async () => {
+      return await request(app.getHttpServer())
+        .get(ENDPOINT)
+        .set('Authorization', 'Bearer invalidtoken')
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should succeed', async () => {
+      return await request(app.getHttpServer())
+        .get(ENDPOINT)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(HttpStatus.OK);
+    });
+  });
+
   afterAll(async () => {
     // Clean up database
-    await prismaService.employee.deleteMany();
-    await prismaService.organization.deleteMany();
+    await prismaService.user.deleteMany();
+    await prismaService.token.deleteMany();
+    await prismaService.org.deleteMany();
 
     await prismaService.$disconnect();
     await module.close();

@@ -7,7 +7,7 @@ import Redis from 'ioredis';
 import { throwInvalidToken } from '../utils';
 
 @Injectable()
-export class RefreshTokenIdsStorage
+class RefreshTokenIdsStorage
   implements OnApplicationBootstrap, OnApplicationShutdown
 {
   private redisClient: Redis;

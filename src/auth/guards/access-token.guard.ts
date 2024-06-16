@@ -10,7 +10,7 @@ import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { jwtConfig } from '@/auth/config';
-import { REQUEST_EMPLOYEE_KEY } from '@/auth/constants';
+import { REQUEST_USER_KEY } from '@/auth/constants';
 import { extractTokenFromHeader } from '@/auth/utils';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class AccessTokenGuard implements CanActivate {
     this.logger.log(`Access token: ${token}`);
     try {
       const payload = await this.jwtService.verifyAsync(token, this.config);
-      request[REQUEST_EMPLOYEE_KEY] = payload;
+      request[REQUEST_USER_KEY] = payload;
     } catch {
       throw new UnauthorizedException('Invalid access token');
     }

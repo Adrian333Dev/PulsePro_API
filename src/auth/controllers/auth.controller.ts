@@ -8,50 +8,45 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
+import { User } from '@prisma/client';
 
 import { AuthService } from '@/auth/services';
-import { ActiveEmployee, Auth } from '@/auth/decorators';
-import {
-  IAccessTokenPayload,
-  IEmployeeProfile,
-  ITokens,
-} from '@/auth/interfaces';
+import { ActiveUser, Auth } from '@/auth/decorators';
+import { IAccessTokenPayload, IUserProfile, ITokens } from '@/auth/interfaces';
 import { AuthType } from '@/auth/enums';
-import { LoginInput, RegisterInput } from '@/auth/dto';
-import { Employee } from '@prisma/client';
+import { SignInInput, SignUpInput } from '@/auth/dto';
+import { AUTH_ROUTES, AUTH_URL } from '@/auth/constants';
 
 @Auth(AuthType.None)
-@Controller('api/auth')
+@Controller(AUTH_URL)
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
+  @Post(AUTH_ROUTES.SIGN_UP)
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() employee: RegisterInput): Promise<boolean> {
-    return this.authService.register(employee);
+  async signUp(@Body() user: SignUpInput): Promise<boolean> {
+    return this.authService.signUp(user);
   }
 
-  @Post('login')
+  @Post(AUTH_ROUTES.SIGN_IN)
   @HttpCode(HttpStatus.OK)
-  async login(@Body() employee: LoginInput): Promise<ITokens> {
-    return this.authService.login(employee);
+  async signIn(@Body() user: SignInInput): Promise<ITokens> {
+    return this.authService.signIn(user);
   }
 
   @Auth(AuthType.RefreshToken)
-  @Post('refresh')
+  @Post(AUTH_ROUTES.REFRESH)
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@ActiveEmployee() employee: Employee): Promise<ITokens> {
-    return this.authService.refreshTokens(employee);
+  async refreshTokens(@ActiveUser() user: User): Promise<ITokens> {
+    return this.authService.refreshTokens(user);
   }
 
   @Auth(AuthType.AccessToken)
-  @Get('me')
+  @Get(AUTH_ROUTES.ME)
   @HttpCode(HttpStatus.OK)
-  async me(
-    @ActiveEmployee('sub') empId: number,
-  ): Promise<IEmployeeProfile> {
-    return this.authService.getEmployeeProfile(empId);
+  async me(@ActiveUser('sub') userId: number): Promise<IUserProfile> {
+    return this.authService.getUserProfile(userId);
   }
 }

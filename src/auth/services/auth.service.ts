@@ -4,18 +4,13 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@/prisma';
 import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
-import { Employee, EmployeeRole, Prisma } from '@prisma/client';
+import { User, UserRole, Prisma } from '@prisma/client';
 
-import { RegisterInput, LoginInput } from '@/auth/dto';
+import { SignUpInput, SignInInput } from '@/auth/dto';
 import { jwtConfig } from '@/auth/config';
-import {
-  IAccessTokenPayload,
-  ITokens,
-  IEmployeeProfile,
-} from '@/auth/interfaces';
+import { IAccessTokenPayload, ITokens, IUserProfile } from '@/auth/interfaces';
 import { throwInvalidCreds } from '@/auth/utils';
-import { RefreshTokenIdsStorage } from './refresh-token-ids.storage';
-import { employeeProfileQuery } from '@/auth/constants';
+import { userProfileQuery } from '@/auth/constants';
 
 @Injectable()
 export class AuthService {
@@ -24,64 +19,59 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     @Inject(jwtConfig.KEY) private config: ConfigType<typeof jwtConfig>,
-    // private readonly refreshTokenIdsStorage: RefreshTokenIdsStorage,
   ) {}
 
-  async register({
-    orgName,
-    password,
-    ...data
-  }: RegisterInput): Promise<boolean> {
+  async signUp({ orgName, password, ...data }: SignUpInput): Promise<boolean> {
     // TODO: Wrap this in a transaction
-    const org = await this.prisma.organization.create({
+    const org = await this.prisma.org.create({
       data: { name: orgName },
     });
 
     const hashedPassword = await argon2.hash(password);
-    const employee = await this.prisma.employee.create({
+    const employee = await this.prisma.user.create({
       data: {
         ...data,
         password: hashedPassword,
         orgId: org.orgId,
-        role: EmployeeRole.ADMIN,
+        role: UserRole.ADMIN,
       },
     });
 
     return !!employee;
   }
 
-  async login({ password, email }: LoginInput): Promise<ITokens> {
-    const employee = await this.prisma.employee.findUnique({
+  async signIn({ password, email }: SignInInput): Promise<ITokens> {
+    const user = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!employee || !(await argon2.verify(employee.password, password)))
+    if (!user || !(await argon2.verify(user.password, password)))
       throwInvalidCreds();
-    return this.generateTokens(employee);
+    return this.generateTokens(user);
   }
 
-  async generateTokens({ empId, email, role }: Employee): Promise<ITokens> {
+  async generateTokens({ userId, email, role }: User): Promise<ITokens> {
     const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken<Partial<IAccessTokenPayload>>(
-        empId,
+        userId,
         this.config.accessTokenTtl,
         { email, role },
       ),
-      this.signToken(empId, this.config.refreshTokenTtl, { refreshTokenId }),
+      this.signToken(userId, this.config.refreshTokenTtl, { refreshTokenId }),
     ]);
-    // await this.refreshTokenIdsStorage.insert(empId, refreshTokenId);
+    await this.prisma.token.create({ data: { tokenId: refreshTokenId, userId } });
     return { accessToken, refreshToken };
   }
 
-  async refreshTokens(employee: Employee): Promise<ITokens> {
-    // await this.refreshTokenIdsStorage.invalidate(employee.empId);
-    return this.generateTokens(employee);
+  async refreshTokens(user: User): Promise<ITokens> {
+    await this.prisma.token.deleteMany({ where: { userId: user.userId } });
+    return this.generateTokens(user);
   }
 
-  async getEmployeeProfile(empId: number): Promise<IEmployeeProfile> {
-    return this.prisma.employee.findUnique({
-      where: { empId },
-      select: employeeProfileQuery,
+  async getUserProfile(userId: number): Promise<IUserProfile> {
+    return this.prisma.user.findUnique({
+      where: { userId },
+      select: userProfileQuery,
     });
   }
 

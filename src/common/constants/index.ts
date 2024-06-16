@@ -1,1 +1,1 @@
-export const BASE_API_URL = '/api';
+export * from './routes.constants';

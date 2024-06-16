@@ -1,16 +1,13 @@
-import { Organization, Employee, Prisma, EmployeeRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 
 export interface IAccessTokenPayload {
   sub: number;
   email: string;
-  role: EmployeeRole;
+  role: UserRole;
 }
 
-export interface IEmployeeProfile
-  extends Omit<
-    Prisma.EmployeeGetPayload<{ include: { org: true } }>,
-    'password'
-  > {}
+export interface IUserProfile
+  extends Omit<Prisma.UserGetPayload<{ include: { org: true } }>, 'password'> {}
 
 export interface ITokens {
   accessToken: string;
@@ -21,8 +18,6 @@ export interface IRefreshTokenPayload extends IAccessTokenPayload {
   refreshTokenId: string;
 }
 
-export interface IRegisterInput extends Omit<Prisma.EmployeeCreateInput, 'org'> {
+export interface ISignUpInput extends Omit<Prisma.UserCreateInput, 'org'> {
   orgName: string;
 }
-
-// employee: empId,

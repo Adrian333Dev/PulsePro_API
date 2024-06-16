@@ -13,29 +13,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum EmployeeRole {
+enum UserRole {
   ADMIN
   HR_MANAGER
   DEPARTMENT_MANAGER
   EMPLOYEE
 }
 
-model Employee {
-  empId    Int          @id @default(autoincrement()) @map("employee_id")
-  name     String
-  email    String       @unique
-  password String       @map("password_hash")
-  role     EmployeeRole @default(EMPLOYEE)
-  orgId    Int          @map("organization_id")
-  org      Organization @relation(fields: [orgId], references: [orgId])
+model User {
+  userId       Int      @id @default(autoincrement()) @map("user_id")
+  name         String
+  email        String   @unique
+  password     String   @map("password_hash")
+  role         UserRole @default(EMPLOYEE)
+  orgId        Int      @map("organization_id")
+  org          Org      @relation(fields: [orgId], references: [orgId])
+  refreshToken Token?
 
   @@map("employees")
 }
 
-model Organization {
-  orgId     Int        @id @default(autoincrement()) @map("organization_id")
+model Org {
+  orgId     Int    @id @default(autoincrement()) @map("organization_id")
   name      String
-  employees Employee[]
+  employees User[]
 
   @@map("organizations")
+}
+
+model Token {
+  tokenId String @id @map("token_id")
+  userId  Int    @unique
+  user    User   @relation(fields: [userId], references: [userId])
+
+  @@map("tokens")
 }
