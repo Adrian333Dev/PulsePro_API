@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
@@ -16,6 +17,7 @@ import { IRefreshTokenPayload } from '@/auth/interfaces';
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
+  private readonly logger = new Logger(RefreshTokenGuard.name);
   constructor(
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
@@ -37,8 +39,10 @@ export class RefreshTokenGuard implements CanActivate {
         where: { userId: sub },
         include: { org: true, refreshToken: true },
       });
+      this.logger.log(user);
+      this.logger.log(`Refresh token id: ${refreshTokenId}`);
       const isValid = user.refreshToken.tokenId === refreshTokenId;
-      if (isValid) throwInvalidToken('Refresh');
+      if (!isValid) throwInvalidToken('Refresh');
       request[REQUEST_USER_KEY] = user;
       return true;
     } catch {

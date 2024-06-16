@@ -59,7 +59,11 @@ export class AuthService {
       ),
       this.signToken(userId, this.config.refreshTokenTtl, { refreshTokenId }),
     ]);
-    await this.prisma.token.create({ data: { tokenId: refreshTokenId, userId } });
+    await this.prisma.token.upsert({
+      where: { userId },
+      create: { tokenId: refreshTokenId, userId },
+      update: { tokenId: refreshTokenId },
+    });
     return { accessToken, refreshToken };
   }
 

@@ -28,11 +28,13 @@ export class AccessTokenGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Access token not provided');
     this.logger.log(`Access token: ${token}`);
     try {
+      this.logger.log(`Config: ${JSON.stringify(this.config)}`);
       const payload = await this.jwtService.verifyAsync(token, this.config);
+      this.logger.log(`Payload: ${JSON.stringify(payload)}`);
       request[REQUEST_USER_KEY] = payload;
+      return true;
     } catch {
       throw new UnauthorizedException('Invalid access token');
     }
-    return true;
   }
 }
