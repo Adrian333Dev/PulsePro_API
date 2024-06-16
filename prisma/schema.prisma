@@ -44,7 +44,7 @@ model Org {
 model Token {
   tokenId String @id @map("token_id")
   userId  Int    @unique
-  user    User   @relation(fields: [userId], references: [userId])
+  user    User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@map("tokens")
 }

@@ -9,27 +9,11 @@ import { AuthModule } from '@/auth';
 import { PrismaModule, PrismaService } from '@/prisma';
 import { AUTH_ROUTES, AUTH_URL } from '@/auth/constants';
 
-/**
- * Auth Endpoints:
- * - POST /api/auth/register - Create a new organization and employee, and assign the employee to the organization
- *   - REQUEST: {email, password, orgName}
- *   - RESPONSE: true
- * - POST /api/auth/login - Login an employee and return access and refresh tokens
- *  - REQUEST: {email, password}
- *  - RESPONSE: {accessToken, refreshToken}
- * - POST /api/auth/refresh - Refresh access token
- *  - AUTHORIZATION: Bearer refreshToken
- *  - RESPONSE: {accessToken, refreshToken}
- * - GET /api/auth/me - Get employee profile
- *  - AUTHORIZATION: Bearer accessToken
- *  - RESPONSE: {id, name, email, org: {orgId, name}}
- */
-
 const mockUser1 = {
-  name: 'John Doe',
-  email: 'john.doe@gmail.com',
+  name: 'Test User 1',
+  email: 'test.user1@gmail.com',
   password: 'password123',
-  orgName: 'Test Org',
+  orgName: 'Test Org 1',
 };
 
 describe(`[Feature] Auth - ${AUTH_URL}`, () => {
@@ -153,7 +137,6 @@ describe(`[Feature] Auth - ${AUTH_URL}`, () => {
     });
   });
 
-  // Test /me endpoint withouth access token, then with invalid access token, then with valid access token
   describe(`GET ${AUTH_ROUTES.ME}`, () => {
     const ENDPOINT = `${AUTH_URL}/${AUTH_ROUTES.ME}`;
 
@@ -178,10 +161,40 @@ describe(`[Feature] Auth - ${AUTH_URL}`, () => {
     });
   });
 
+  describe(`POST ${AUTH_ROUTES.REFRESH}`, () => {
+    const ENDPOINT = `${AUTH_URL}/${AUTH_ROUTES.REFRESH}`;
+
+    it('should fail without refresh token', async () => {
+      return await request(app.getHttpServer())
+        .post(ENDPOINT)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should fail with invalid refresh token', async () => {
+      return await request(app.getHttpServer())
+        .post(ENDPOINT)
+        .set('Authorization', 'Bearer invalidtoken')
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+
+    it('should succeed', async () => {
+      return await request(app.getHttpServer())
+        .post(ENDPOINT)
+        .set('Authorization', `Bearer ${refreshToken}`)
+        .expect(HttpStatus.OK);
+    });
+
+    it('should fail after refresh token is used', async () => {
+      return await request(app.getHttpServer())
+        .post(ENDPOINT)
+        .set('Authorization', `Bearer ${refreshToken}`)
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
+  });
+
   afterAll(async () => {
     // Clean up database
     await prismaService.user.deleteMany();
-    await prismaService.token.deleteMany();
     await prismaService.org.deleteMany();
 
     await prismaService.$disconnect();
